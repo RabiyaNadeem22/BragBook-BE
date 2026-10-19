@@ -1,0 +1,211 @@
+// Prisma Schema for BragBook
+// Relational PostgreSQL database for career tracking and brag documents
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProjectStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  ARCHIVED
+}
+
+enum AchievementCategory {
+  TECHNICAL
+  LEADERSHIP
+  TEAMWORK
+  PROBLEM_SOLVING
+  LEARNING
+  DELIVERY
+  COMMUNICATION
+  OTHER
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum GoalStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum GoalPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum EvidenceType {
+  URL
+  GITHUB_PR
+  JIRA_TICKET
+  DEPLOYMENT
+  DOCS
+  SCREENSHOT
+  OTHER
+}
+
+model User {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  passwordHash String
+  avatar       String?
+  jobTitle     String?
+  company      String?
+  bio          String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  achievements Achievement[]
+  projects     Project[]
+  skills       Skill[]
+  goals        Goal[]
+  feedback     Feedback[]
+  tags         Tag[]
+
+  @@map("users")
+}
+
+model Project {
+  id           String        @id @default(uuid())
+  userId       String
+  name         String
+  description  String?
+  role         String?
+  technologies String[]      @default([])
+  startDate    DateTime?
+  endDate      DateTime?
+  status       ProjectStatus @default(IN_PROGRESS)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievements Achievement[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("projects")
+}
+
+model Achievement {
+  id          String              @id @default(uuid())
+  userId      String
+  projectId   String?
+  title       String
+  description String
+  date        DateTime            @default(now())
+  category    AchievementCategory @default(TECHNICAL)
+  impact      String?
+  metrics     String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project     Project?            @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  evidence    Evidence[]
+  tags        Tag[]
+
+  @@index([userId])
+  @@index([date])
+  @@index([category])
+  @@index([projectId])
+  @@map("achievements")
+}
+
+model Evidence {
+  id            String       @id @default(uuid())
+  achievementId String
+  title         String
+  url           String
+  type          EvidenceType @default(URL)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  achievement   Achievement  @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@index([achievementId])
+  @@map("evidence")
+}
+
+model Tag {
+  id           String        @id @default(uuid())
+  userId       String
+  name         String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievements Achievement[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("tags")
+}
+
+model Skill {
+  id                String     @id @default(uuid())
+  userId            String
+  name              String
+  category          String
+  level             SkillLevel @default(INTERMEDIATE)
+  yearsOfExperience Float?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([category])
+  @@map("skills")
+}
+
+model Goal {
+  id          String       @id @default(uuid())
+  userId      String
+  title       String
+  description String?
+  status      GoalStatus   @default(NOT_STARTED)
+  priority    GoalPriority @default(MEDIUM)
+  progress    Int          @default(0)
+  deadline    DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([priority])
+  @@map("goals")
+}
+
+model Feedback {
+  id        String   @id @default(uuid())
+  userId    String
+  content   String
+  source    String
+  category  String?
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([date])
+  @@map("feedback")
+}

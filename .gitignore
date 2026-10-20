@@ -1,3 +1,4 @@
+
 # Dependencies
 node_modules/
 .pnp
@@ -12,12 +13,11 @@ build/
 .next/
 out/
 
-# Environment files
+# Environment variables / Secrets
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
+!.env.sample
 
 # Logs
 npm-debug.log*
@@ -36,8 +36,21 @@ lerna-debug.log*
 *.sln
 *.sw?
 .DS_Store
+Thumbs.db
 
-# Prisma generated artifacts / SQLite temp files
+# Prisma generated artifacts
+# Ignore only if Prisma Client is generated here
+# generated/prisma/
+
+# Local databases and backups
 *.sqlite
 *.sqlite3
 *.db
+*.dump
+*.bak
+*.backup
+*.sql.gz
+
+# Temporary files
+tmp/
+temp/
